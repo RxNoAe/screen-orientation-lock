@@ -32,17 +32,49 @@ jobs:
       - name: 移除本机专属的 JDK 路径
         run: sed -i '/^org\.gradle\.java\.home/d' gradle.properties
 
+      # release 包必须签名才能安装，而密钥不入库。这里从仓库 Secret 还原到 runner
+      # 的临时目录，再写一份仓库根目录的 keystore.properties 供 build.gradle.kts 读取。
+      # 没有 Secret 时（例如外部 PR）只产出 debug 包，不让构建失败。
+      - name: 还原签名密钥
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_B64:-}" ]; then
+            echo "::warning::没有签名密钥，本次只产出 debug 包"
+            exit 0
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/release.jks"
+            echo "storePassword=$STORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+
       - name: 跑单元测试
         run: ./gradlew testDebugUnitTest --console=plain
 
-      - name: 构建 debug 包
-        run: ./gradlew assembleDebug --console=plain
+      # release 打开 R8：dex 从 27 MB 降到约 2.3 MB。debug 不混淆，装出来仍有
+      # 3~4 MB，所以对外分发的包一律走 release。
+      - name: 构建
+        run: |
+          if [ -f keystore.properties ]; then
+            ./gradlew assembleRelease --console=plain
+          else
+            ./gradlew assembleDebug --console=plain
+          fi
 
       - name: 上传 APK
         uses: actions/upload-artifact@v7
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: app
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
       - name: 上传测试报告

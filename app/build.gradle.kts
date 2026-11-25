@@ -76,16 +76,7 @@ android {
             )
         }
         debug {
-            // CI 只产出 debug 包（release 需要仓库外的密钥，见文件顶部）。debug 默认
-            // 不做任何裁剪，Compose 全家桶 + WorkManager + DataStore 会把 dex 撑到
-            // 27 MB，压完仍有 12 MB。这里对 debug 也开 R8 与资源裁剪，产物和 release
-            // 一样小；代价是堆栈里的类名被混淆，调试看日志时需要 retrace。
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            isMinifyEnabled = false
         }
     }
 
