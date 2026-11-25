@@ -88,7 +88,7 @@
 ### 环境
 
 - JDK 21（推荐直接用 Android Studio 自带 JBR）
-- Android SDK，`compileSdk 37`
+- Android SDK，`compileSdk 36`
 - Gradle 8.12（wrapper 已随仓库提交）
 
 ```bash
