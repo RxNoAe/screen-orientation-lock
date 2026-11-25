@@ -76,7 +76,16 @@ android {
             )
         }
         debug {
-            isMinifyEnabled = false
+            // CI 只产出 debug 包（release 需要仓库外的密钥，见文件顶部）。debug 默认
+            // 不做任何裁剪，Compose 全家桶 + WorkManager + DataStore 会把 dex 撑到
+            // 27 MB，压完仍有 12 MB。这里对 debug 也开 R8 与资源裁剪，产物和 release
+            // 一样小；代价是堆栈里的类名被混淆，调试看日志时需要 retrace。
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -92,7 +101,10 @@ android {
     }
     packaging {
         resources {
+            // 只留运行时真正会读的元数据；版本文件与协程调试探针不参与运行。
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/*.version"
+            excludes += "DebugProbesKt.bin"
         }
     }
 }
@@ -107,14 +119,10 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime.ktx)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
-
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 }
