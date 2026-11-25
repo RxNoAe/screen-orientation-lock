@@ -39,8 +39,8 @@ android {
         // 那会直接废掉本软件的核心功能。
         // 依据:docs/superpowers/specs/2026-09-25-orientation-lock-design.md §2.6。
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
     }
 
     signingConfigs {

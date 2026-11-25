@@ -223,13 +223,21 @@ class InputAutoLandscapeTest {
     // ---- InputDeviceRules ----
 
     @Test
-    fun `alphabet 键盘类型算键盘`() {
+    fun `字母键盘算键盘`() {
         assertTrue(InputDeviceRules.isKeyboard(KEYBOARD_TYPE_ALPHABETIC, isVirtual = false))
     }
 
     @Test
+    fun `非字母键盘设备不算键盘`() {
+        // 电源键 / 音量键的 gpio-keys、系统合成的 uinput_nav、耳机线控都报这个类型。
+        // 它们不是键盘;若判成键盘,手机什么都不插也会被当成接了键盘而横屏。
+        assertFalse(
+            InputDeviceRules.isKeyboard(KEYBOARD_TYPE_NON_ALPHABETIC, isVirtual = false)
+        )
+    }
+
+    @Test
     fun `keyboardType 为 NONE 的按键设备不算键盘`() {
-        // 电源键 / 音量键那类 gpio-keys 不是键盘,避免常驻误触发
         assertFalse(InputDeviceRules.isKeyboard(InputDeviceRules.KEYBOARD_TYPE_NONE, isVirtual = false))
     }
 
@@ -249,8 +257,18 @@ class InputAutoLandscapeTest {
     }
 
     @Test
+    fun `相对鼠标算鼠标`() {
+        assertTrue(InputDeviceRules.isMouse(SOURCE_MOUSE_RELATIVE, isVirtual = false))
+    }
+
+    @Test
     fun `触摸屏不算鼠标`() {
         assertFalse(InputDeviceRules.isMouse(SOURCE_TOUCHSCREEN, isVirtual = false))
+    }
+
+    @Test
+    fun `触摸屏即使带指针位也不算鼠标`() {
+        assertFalse(InputDeviceRules.isMouse(SOURCE_TOUCHSCREEN or SOURCE_MOUSE, isVirtual = false))
     }
 
     @Test
@@ -265,10 +283,13 @@ class InputAutoLandscapeTest {
     }
 
     private companion object {
-        const val KEYBOARD_TYPE_ALPHABETIC = 1
+        // 与 android.view.InputDevice 的常量一致
+        const val KEYBOARD_TYPE_NON_ALPHABETIC = 1
+        const val KEYBOARD_TYPE_ALPHABETIC = 2
         const val SOURCE_KEYBOARD = 0x00000101
         const val SOURCE_TOUCHSCREEN = 0x00001002
         const val SOURCE_MOUSE = 0x00002002
+        const val SOURCE_MOUSE_RELATIVE = 0x00020004
         const val SOURCE_TOUCHPAD = 0x00100008
     }
 }

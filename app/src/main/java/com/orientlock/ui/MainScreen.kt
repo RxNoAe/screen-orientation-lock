@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,13 +30,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.orientlock.R
+import com.orientlock.domain.InputCapabilities
 import com.orientlock.domain.NaturalOrientation
 import com.orientlock.domain.OrientationMode
+import com.orientlock.system.InputDeviceWatcher
 import com.orientlock.system.PermissionIntents
+import com.orientlock.ui.components.InputStatusRow
 import com.orientlock.ui.components.ModeCard
 import com.orientlock.ui.components.PermissionBanner
 import com.orientlock.ui.components.PhonePreview
 import com.orientlock.ui.components.RomAdaptCard
+import com.orientlock.ui.components.SectionHeader
 import com.orientlock.ui.components.SettingRow
 import com.orientlock.ui.components.SettingsCard
 import com.orientlock.ui.components.StatusPill
@@ -75,6 +81,8 @@ fun MainScreen(
     }
 
     val currentMode = state.settings.mode
+    // 只读监听:界面自己看系统认到了什么,与服务的判定共用同一套规则
+    val inputCapabilities = rememberInputCapabilities()
 
     Column(
         modifier = modifier
@@ -197,6 +205,8 @@ fun MainScreen(
 
         Spacer(Modifier.height(24.dp))
 
+        SectionHeader("Behaviour")
+
         SettingsCard {
             SettingRow(
                 iconRes = R.drawable.ic_setting_boot,
@@ -221,9 +231,11 @@ fun MainScreen(
             )
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
-        // 键盘 / 鼠标自动横屏:总开关 + 三个子项。
+        SectionHeader("Input devices")
+
+        // 键盘 / 鼠标自动横屏:总开关 + 实时状态 + 三个子项。
         // 子项只在总开关打开时出现(progressive disclosure)——关着时整块就一行,
         // 不占地方,也不会让人以为改了那些开关有用。
         SettingsCard {
@@ -235,6 +247,7 @@ fun MainScreen(
                 onCheckedChange = viewModel::setInputAutoLandscapeEnabled,
             )
             if (state.settings.inputAutoLandscapeEnabled) {
+                InputStatusRow(capabilities = inputCapabilities)
                 SettingRow(
                     iconRes = R.drawable.ic_setting_keyboard,
                     title = "Keyboard",
@@ -259,7 +272,7 @@ fun MainScreen(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(20.dp))
 
         RomAdaptCard(
             onOpenSettings = {
@@ -280,4 +293,22 @@ fun MainScreen(
 
         Spacer(Modifier.height(28.dp))
     }
+}
+
+/**
+ * 当前接入的键盘 / 鼠标,供设置卡片显示实时状态。
+ *
+ * 界面自己开一份只读监听:服务里那份只管真正切横屏。传 null handler 时回调固定在
+ * 主线程,写 Compose 状态不需要再转线程。DisposableEffect 保证离开界面即注销。
+ */
+@Composable
+private fun rememberInputCapabilities(): InputCapabilities {
+    val context = LocalContext.current
+    val state = remember { mutableStateOf(InputCapabilities.NONE) }
+    DisposableEffect(context) {
+        val watcher = InputDeviceWatcher(context) { state.value = it }
+        watcher.start()
+        onDispose { watcher.stop() }
+    }
+    return state.value
 }

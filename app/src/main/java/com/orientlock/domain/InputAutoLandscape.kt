@@ -25,42 +25,60 @@ data class InputCapabilities(
  * 只吃原始值(sources 位掩码、keyboardType、是否虚拟设备),不引用
  * `android.view.InputDevice`——常量写成字面量,于是本类可以在纯 JVM 测试里直接跑。
  *
- * 为什么不直接判 `sources and SOURCE_KEYBOARD`:电源键、音量键那类 "gpio-keys"
- * 设备在部分 ROM 上带 SOURCE_KEYBOARD 位,但它们不是键盘。`keyboardType` 描述的是
- * 「能不能输入字母数字」,gpio-keys 与耳机线控都是 [KEYBOARD_TYPE_NONE],
- * 所以用它当判据能自然把这些误报挡掉。
+ * 键盘判据必须落在 [KEYBOARD_TYPE_ALPHABETIC] 上,不能只判「不等于 NONE」。
+ * 手机本身常驻着一堆带按键但不是键盘的设备——电源键 / 音量键的 `gpio-keys`、
+ * 系统合成的 `uinput_nav`、耳机线控——它们的 `keyboardType` 是
+ * [KEYBOARD_TYPE_NON_ALPHABETIC],只按「非 NONE」判会让**什么都不插**的手机
+ * 也命中,总开关一打开就横屏。只有真正能打字的键盘(USB / 蓝牙 HID)才报
+ * [KEYBOARD_TYPE_ALPHABETIC]。
  */
 object InputDeviceRules {
 
     /** 与 android.view.InputDevice.KEYBOARD_TYPE_NONE 一致 */
     const val KEYBOARD_TYPE_NONE = 0
 
+    /** 与 android.view.InputDevice.KEYBOARD_TYPE_NON_ALPHABETIC 一致(音量键那类) */
+    const val KEYBOARD_TYPE_NON_ALPHABETIC = 1
+
+    /** 与 android.view.InputDevice.KEYBOARD_TYPE_ALPHABETIC 一致(真正的键盘) */
+    const val KEYBOARD_TYPE_ALPHABETIC = 2
+
+    /** 与 android.view.InputDevice.SOURCE_TOUCHSCREEN 一致 */
+    private const val SOURCE_TOUCHSCREEN = 0x00001002
+
     /** 与 android.view.InputDevice.SOURCE_MOUSE 一致 */
     private const val SOURCE_MOUSE = 0x00002002
+
+    /** 与 android.view.InputDevice.SOURCE_MOUSE_RELATIVE 一致(演示用鼠标) */
+    private const val SOURCE_MOUSE_RELATIVE = 0x00020004
 
     /** 与 android.view.InputDevice.SOURCE_TOUCHPAD 一致 */
     private const val SOURCE_TOUCHPAD = 0x00100008
 
     /**
+     * 只有能打字的键盘才算键盘。
+     *
      * @param keyboardType `InputDevice.getKeyboardType()`
      * @param isVirtual `InputDevice.isVirtual()`;API < 29 上拿不到,调用方传 false
      */
     fun isKeyboard(keyboardType: Int, isVirtual: Boolean): Boolean =
-        !isVirtual && keyboardType != KEYBOARD_TYPE_NONE
+        !isVirtual && keyboardType == KEYBOARD_TYPE_ALPHABETIC
 
     /**
      * 鼠标与触控板都算「鼠标」:对用户来说都是指哪儿点哪儿的定位设备。
      *
-     * 触摸屏不会命中——SOURCE_TOUCHSCREEN 的位与 SOURCE_MOUSE 不同,按位与结果不等于
-     * SOURCE_MOUSE。
+     * 触摸屏即便带上指针位也不算——先把 [SOURCE_TOUCHSCREEN] 排除掉。多数设备上
+     * 这个位本来就不与鼠标位重叠,这里是兜底。
      *
      * @param sources `InputDevice.getSources()`
      * @param isVirtual `InputDevice.isVirtual()`;API < 29 上拿不到,调用方传 false
      */
     fun isMouse(sources: Int, isVirtual: Boolean): Boolean {
         if (isVirtual) return false
+        if ((sources and SOURCE_TOUCHSCREEN) == SOURCE_TOUCHSCREEN) return false
         return (sources and SOURCE_MOUSE) == SOURCE_MOUSE ||
-            (sources and SOURCE_TOUCHPAD) == SOURCE_TOUCHPAD
+            (sources and SOURCE_TOUCHPAD) == SOURCE_TOUCHPAD ||
+            (sources and SOURCE_MOUSE_RELATIVE) == SOURCE_MOUSE_RELATIVE
     }
 }
 
