@@ -22,11 +22,20 @@ val releaseSigningConfig: Pair<File, Properties>? = run {
 
 android {
     namespace = "com.orientlock"
-    compileSdk = 36
+
+    // 用 Android 17(API 37)SDK 编译。AGP 8.9.3 官方只测到更低的 API,
+    // 因此 gradle.properties 里需要 android.suppressUnsupportedCompileSdk=37。
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.orientlock"
         minSdk = 26
+
+        // 刻意停在 35,不要跟着 compileSdk 升到 37。
+        // Android 17(API 37)起,targetSdk >= 37 的应用在宽度 ≥ 600dp 的大屏
+        // (平板、折叠屏)上会被系统忽略方向限制,且不再提供 Android 16 的退出开关——
+        // 那会直接废掉本软件的核心功能。compileSdk 跟新只为能用新 SDK 编译。
+        // 依据:docs/superpowers/specs/2026-09-25-orientation-lock-design.md §2.6。
         targetSdk = 35
         versionCode = 2
         versionName = "1.0.1"

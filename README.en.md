@@ -89,7 +89,7 @@ Also, the overlay requires the app process to be alive. This app holds it in a f
 ### Requirements
 
 - JDK 21 (Android Studio's bundled JBR works well)
-- Android SDK, `compileSdk 36`
+- Android SDK, `compileSdk 37`
 - Gradle 8.12 (the wrapper is committed)
 
 ```bash
