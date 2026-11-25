@@ -4,26 +4,26 @@ package com.orientlock.domain
  * 屏幕方向锁定模式。
  *
  * @property storageName 持久化到 DataStore 的名称。改动会导致旧设置失效，勿随意改。
- * @property label 界面上显示的中文名称。
+ * @property label 界面上显示的名称。
  */
 enum class OrientationMode(val storageName: String, val label: String) {
     /** 自然竖屏 */
-    PORTRAIT("portrait", "竖屏"),
+    PORTRAIT("portrait", "Portrait"),
 
     /** 竖屏但上下颠倒 */
-    PORTRAIT_REVERSE("portrait_reverse", "反向竖屏"),
+    PORTRAIT_REVERSE("portrait_reverse", "Reverse Portrait"),
 
     /** 自然横屏（设备左转 90°） */
-    LANDSCAPE("landscape", "横屏"),
+    LANDSCAPE("landscape", "Landscape"),
 
     /** 横屏但左右颠倒 */
-    LANDSCAPE_REVERSE("landscape_reverse", "反向横屏"),
+    LANDSCAPE_REVERSE("landscape_reverse", "Reverse Landscape"),
 
     /** 锁定为选中瞬间设备所处的方向，角度在选中时抓取 */
-    CURRENT("current", "当前方向"),
+    CURRENT("current", "Current"),
 
     /** 不锁定，跟随传感器 */
-    AUTO("auto", "自动"),
+    AUTO("auto", "Auto"),
 
     ;
 

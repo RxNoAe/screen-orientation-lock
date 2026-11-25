@@ -104,7 +104,7 @@ class MainViewModel(
         val canOverlay = permissions.canDrawOverlays()
         val canWrite = permissions.canWriteSettings()
         if (!canOverlay && !canWrite) {
-            _hint.value = "还没有授予锁定所需的权限，请先点上方「去开启」"
+            _hint.value = "You haven't granted the permission needed to lock. Tap the button above to enable it."
             refreshPermissions()
             return
         }
@@ -115,7 +115,7 @@ class MainViewModel(
             try {
                 repository.setMode(mode)
             } catch (e: Exception) {
-                _hint.value = "写入系统设置失败，已改用悬浮窗接管"
+                _hint.value = "Couldn't write system settings; switched to overlay control"
             }
             services.start()
         }

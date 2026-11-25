@@ -120,8 +120,8 @@ class SystemOrientationWriter(
 
             else -> {
                 val angle = mode.userRotationFor(
-                    requireNotNull(natural) { "固定角度模式需要天然朝向，AUTO 才可传 null" }
-                ) ?: error("模式 $mode 不是固定角度模式")
+                    requireNotNull(natural) { "Fixed-angle modes require a natural orientation; only AUTO may pass null" }
+                ) ?: error("Mode $mode is not a fixed-angle mode")
                 // 顺序有意为之：auto:off 必须先于 angle:。
                 // 自动旋转开启时窗口管理器会用传感器值覆盖 USER_ROTATION，
                 // 先关掉才能让写入的角度一次确定地生效。
@@ -138,7 +138,7 @@ class SystemOrientationWriter(
 
     private fun checkAngle(angle: Int) {
         require(angle in DisplayRotation.NATURAL..DisplayRotation.THREE_QUARTER) {
-            "非法旋转角度 $angle"
+            "Illegal rotation angle $angle"
         }
     }
 

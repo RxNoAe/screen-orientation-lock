@@ -55,20 +55,20 @@ fun RomAdaptCard(
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_rom),
-                contentDescription = "系统适配",
+                contentDescription = "System compatibility",
                 tint = TextSecondary,
                 modifier = Modifier.size(20.dp),
             )
             Text(
-                text = "系统适配",
+                text = "System compatibility",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
         Text(
-            text = "小米、华为、OPPO、vivo 等系统会限制应用后台自启。" +
-                "若重启手机后方向没有自动恢复，请在系统的「自启动管理」或「应用启动管理」里" +
-                "允许本应用自启，并在电池设置里关闭对其的后台限制。",
+            text = "MIUI, Huawei, OPPO, vivo, and similar systems restrict apps from auto-starting " +
+                "in the background. If the orientation isn't restored automatically after a reboot, " +
+                "allow this app to auto-start in the system's \"Autostart\" or \"App launch\" manager, and remove its background restrictions in battery settings.",
             style = MaterialTheme.typography.bodySmall,
             color = TextTertiary,
         )
@@ -81,7 +81,7 @@ fun RomAdaptCard(
             border = BorderStroke(1.dp, GlassBorder),
             shape = RoundedCornerShape(12.dp),
         ) {
-            Text("打开设置")
+            Text("Open settings")
         }
     }
 }

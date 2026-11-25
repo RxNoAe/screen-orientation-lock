@@ -27,7 +27,7 @@ import com.orientlock.ui.theme.TextTertiary
 fun StatusPill(current: OrientationMode, modifier: Modifier = Modifier) {
     val locked = current != OrientationMode.AUTO
     val accent = if (locked) LockedGreen else TextTertiary
-    val text = if (locked) "已锁定 · ${current.label}" else "未锁定 · 跟随传感器"
+    val text = if (locked) "Locked · ${current.label}" else "Not locked · Following sensor"
 
     Row(
         modifier = modifier

@@ -35,10 +35,10 @@ class NotificationHelper(private val context: Context) {
     fun ensureChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "方向锁定",
+            "Orientation Lock",
             NotificationManager.IMPORTANCE_LOW, // 无声、不浮动，安静常驻
         ).apply {
-            description = "显示当前锁定的屏幕方向，并提供快速切换按钮"
+            description = "Shows the currently locked screen orientation with quick toggle buttons"
             setShowBadge(false)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
@@ -72,14 +72,14 @@ class NotificationHelper(private val context: Context) {
 
         val locked = currentMode != OrientationMode.AUTO
         val title = when {
-            locked && !lockAvailable -> "无法锁定 · 权限已失效"
-            locked -> "${currentMode.label}锁定中"
-            else -> "未锁定 · 跟随传感器"
+            locked && !lockAvailable -> "Can't lock · Permission lost"
+            locked -> "${currentMode.label} locked"
+            else -> "Not locked · Following sensor"
         }
         val text = when {
-            !lockAvailable -> "点按打开 · 重新开启权限"
-            notificationGranted -> "点按打开 · 用下方按钮快速切换"
-            else -> "通知权限未开启，无法显示此通知"
+            !lockAvailable -> "Tap to open · Re-enable permission"
+            notificationGranted -> "Tap to open · Quick toggle with the buttons below"
+            else -> "Notification permission is off, so this notification can't be shown"
         }
 
         val reverseTarget = currentMode.reversed()
@@ -99,10 +99,10 @@ class NotificationHelper(private val context: Context) {
             // 顺序有意：系统折叠态最多显示 3 个 action，第 4 个要展开才看得到。
             // 竖屏、横屏是核心，解除是「恢复正常」的出口，这三个必须常驻可见；
             // 反向频率最低，放在第 4 位，展开后仍可用，不丢功能。
-            .addAction(0, "竖屏", actionIntent(ACTION_SET_PORTRAIT))
-            .addAction(0, "横屏", actionIntent(ACTION_SET_LANDSCAPE))
-            .addAction(0, "解除", actionIntent(ACTION_UNLOCK))
-            .addAction(0, "反向", reverseIntent(reverseTarget))
+            .addAction(0, "Portrait", actionIntent(ACTION_SET_PORTRAIT))
+            .addAction(0, "Landscape", actionIntent(ACTION_SET_LANDSCAPE))
+            .addAction(0, "Unlock", actionIntent(ACTION_UNLOCK))
+            .addAction(0, "Reverse", reverseIntent(reverseTarget))
             .build()
     }
 

@@ -32,7 +32,7 @@ class AndroidServiceGateway(private val context: Context) : ServiceGateway {
     override fun restartGuard() {
         val active = OrientationService.activeInstance()
         if (active == null) {
-            Log.i(TAG, "restartGuard：服务未运行，设置已落盘，下次启动生效")
+            Log.i(TAG, "restartGuard: service not running; settings are saved and will apply on next start")
             return
         }
         active.restartGuard()

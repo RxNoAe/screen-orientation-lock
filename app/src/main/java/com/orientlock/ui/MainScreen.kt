@@ -93,12 +93,12 @@ fun MainScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "屏幕方向锁",
+                    text = "Screen Orientation Lock",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "让每一屏都按你要的方向显示",
+                    text = "Keep every screen in the orientation you want",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextTertiary,
                 )
@@ -113,19 +113,19 @@ fun MainScreen(
         val needsOverlay = !state.canDrawOverlays
         PermissionBanner(
             visible = state.isLoaded && needsOverlay,
-            title = if (state.canWriteSettings) "开启悬浮窗可锁住更多应用" else "锁定需要一项权限",
+            title = if (state.canWriteSettings) "Enable the overlay to lock more apps" else "Locking needs one permission",
             message = if (state.canWriteSettings) {
-                "当前只能锁住「跟随系统方向」的应用。车机桌面、部分音视频应用会在自己的" +
-                    "代码里声明方向，安卓优先听它们的——只有「显示在其他应用上层」权限能压过去。"
+                "Right now only apps that follow the system orientation can be locked. Car head-unit launchers and " +
+                    "some media apps declare their own orientation in code, and Android listens to them first — only the \"Display over other apps\" permission can override that."
             } else {
-                "「显示在其他应用上层」能压过应用自己声明的方向，是推荐的一条；" +
-                    "「修改系统设置」只能锁住跟随系统方向的应用。两条都不通时锁定不会生效。"
+                "\"Display over other apps\" can override an app's own declared orientation and is the " +
+                    "recommended path; \"Modify system settings\" only locks apps that follow the system orientation. If neither is granted, locking won't work."
             },
-            primaryLabel = "开启悬浮窗",
+            primaryLabel = "Enable overlay",
             onPrimaryClick = {
                 context.startActivity(PermissionIntents.drawOverlays(context))
             },
-            secondaryLabel = if (state.canWriteSettings) null else "修改系统设置",
+            secondaryLabel = if (state.canWriteSettings) null else "Modify system settings",
             onSecondaryClick = if (state.canWriteSettings) {
                 null
             } else {
@@ -150,7 +150,7 @@ fun MainScreen(
         )
 
         Text(
-            text = "所有跟随系统方向的应用",
+            text = "All apps that follow the system orientation",
             style = MaterialTheme.typography.bodySmall,
             color = TextTertiary,
             modifier = Modifier.padding(top = 8.dp),
@@ -200,22 +200,22 @@ fun MainScreen(
         SettingsCard {
             SettingRow(
                 iconRes = R.drawable.ic_setting_boot,
-                title = "开机自启",
-                subtitle = "重启后自动恢复上次锁定",
+                title = "Start on boot",
+                subtitle = "Restore your last lock after a reboot",
                 checked = state.settings.autoStartOnBoot,
                 onCheckedChange = viewModel::setAutoStartOnBoot,
             )
             SettingRow(
                 iconRes = R.drawable.ic_setting_notification,
-                title = "常驻通知",
-                subtitle = "下拉通知栏即可切换方向",
+                title = "Persistent notification",
+                subtitle = "Switch orientation from the notification shade",
                 checked = state.settings.persistentNotification,
                 onCheckedChange = viewModel::setPersistentNotification,
             )
             SettingRow(
                 iconRes = R.drawable.ic_setting_guard,
-                title = "守护模式",
-                subtitle = "方向被改掉时自动改回来",
+                title = "Guard mode",
+                subtitle = "Revert the orientation when something changes it",
                 checked = state.settings.guardEnabled,
                 onCheckedChange = viewModel::setGuardEnabled,
             )
@@ -235,7 +235,7 @@ fun MainScreen(
         Spacer(Modifier.height(20.dp))
 
         Text(
-            text = "若应用自身写死了方向，本软件无法改变它",
+            text = "If an app hard-codes its own orientation, this app can't override it",
             style = MaterialTheme.typography.bodySmall,
             color = TextTertiary,
         )

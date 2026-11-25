@@ -174,8 +174,8 @@ private fun DrawScope.drawPhone(
 }
 
 private fun modeGlyph(mode: OrientationMode): String = when (mode) {
-    OrientationMode.PORTRAIT, OrientationMode.PORTRAIT_REVERSE -> "竖"
-    OrientationMode.LANDSCAPE, OrientationMode.LANDSCAPE_REVERSE -> "横"
-    OrientationMode.CURRENT -> "当"
-    OrientationMode.AUTO -> "自"
+    OrientationMode.PORTRAIT, OrientationMode.PORTRAIT_REVERSE -> "P"
+    OrientationMode.LANDSCAPE, OrientationMode.LANDSCAPE_REVERSE -> "L"
+    OrientationMode.CURRENT -> "C"
+    OrientationMode.AUTO -> "A"
 }

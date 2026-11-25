@@ -50,7 +50,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="持续维护用户选择的屏幕方向，并通过常驻通知提供快捷切换入口" />
+                android:value="Continuously maintains the user-selected screen orientation and provides quick toggle access via a persistent notification" />
         </service>
 
         <receiver

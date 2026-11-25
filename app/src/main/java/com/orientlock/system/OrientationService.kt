@@ -157,7 +157,7 @@ class OrientationService : Service() {
             pinnedRotation = snap.pinnedRotation,
         )
         if (!overlay.setOrientation(orientation)) {
-            Log.w(TAG, "悬浮窗接管失败：多半是没授予「显示在其他应用上层」权限")
+            Log.w(TAG, "Overlay takeover failed: most likely the \"Display over other apps\" permission isn't granted")
         }
     }
 
@@ -199,7 +199,7 @@ class OrientationService : Service() {
         try {
             repository.setMode(mode)
         } catch (e: Exception) {
-            Log.w(TAG, "写入方向 $mode 失败", e)
+            Log.w(TAG, "Failed to write orientation $mode", e)
         }
         refreshNotification()
     }
@@ -208,7 +208,7 @@ class OrientationService : Service() {
         try {
             repository.guardTick()
         } catch (e: Exception) {
-            Log.w(TAG, "守护心跳失败", e)
+            Log.w(TAG, "Guard heartbeat failed", e)
         }
         // 心跳跑完必须刷新通知。权限被收回后 putInt 会静默失败（它返回 Boolean，
         // 我们拿不到也改不了系统），此时若不刷新，通知会一直显示「xx锁定中」——
