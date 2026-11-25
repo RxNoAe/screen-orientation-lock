@@ -160,6 +160,8 @@ For CI, `.github/workflows/build.yml` restores the key from four repository secr
 
 Without them the workflow falls back to a debug build instead of failing.
 
+Tag pushes (`v*`) run `.github/workflows/release.yml`, which builds a signed release and publishes `OrientLock-<version>.apk` using the same four secrets.
+
 ---
 
 ## Code structure
