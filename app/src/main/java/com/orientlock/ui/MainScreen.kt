@@ -223,6 +223,44 @@ fun MainScreen(
 
         Spacer(Modifier.height(16.dp))
 
+        // 键盘 / 鼠标自动横屏:总开关 + 三个子项。
+        // 子项只在总开关打开时出现(progressive disclosure)——关着时整块就一行,
+        // 不占地方,也不会让人以为改了那些开关有用。
+        SettingsCard {
+            SettingRow(
+                iconRes = R.drawable.ic_setting_input_auto,
+                title = "Auto landscape with keyboard or mouse",
+                subtitle = "Switch to landscape when an input device is connected",
+                checked = state.settings.inputAutoLandscapeEnabled,
+                onCheckedChange = viewModel::setInputAutoLandscapeEnabled,
+            )
+            if (state.settings.inputAutoLandscapeEnabled) {
+                SettingRow(
+                    iconRes = R.drawable.ic_setting_keyboard,
+                    title = "Keyboard",
+                    subtitle = "Trigger when a keyboard is connected",
+                    checked = state.settings.inputAutoLandscapeKeyboard,
+                    onCheckedChange = viewModel::setInputAutoLandscapeKeyboard,
+                )
+                SettingRow(
+                    iconRes = R.drawable.ic_setting_mouse,
+                    title = "Mouse",
+                    subtitle = "Trigger when a mouse or touchpad is connected",
+                    checked = state.settings.inputAutoLandscapeMouse,
+                    onCheckedChange = viewModel::setInputAutoLandscapeMouse,
+                )
+                SettingRow(
+                    iconRes = R.drawable.ic_setting_restore,
+                    title = "Restore previous orientation",
+                    subtitle = "Go back to your last mode when the device is unplugged",
+                    checked = state.settings.inputAutoLandscapeRestore,
+                    onCheckedChange = viewModel::setInputAutoLandscapeRestore,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(16.dp))
+
         RomAdaptCard(
             onOpenSettings = {
                 val intent = PermissionIntents.romAutoStart(context)

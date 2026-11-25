@@ -145,6 +145,34 @@ class MainViewModel(
         }
     }
 
+    /**
+     * 总开关:接键盘 / 鼠标自动切横屏。
+     *
+     * 打开时必须把服务拉起来——插拔检测跑在 [com.orientlock.system.OrientationService]
+     * 里,服务不在就没人监听。关掉不用停服务,服务收到设置流后自己注销监听。
+     */
+    fun setInputAutoLandscapeEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.setInputAutoLandscapeEnabled(enabled)
+            if (enabled) services.start()
+        }
+    }
+
+    /** 子项:接键盘是否触发。设置落盘即可,运行中的服务经设置流即时生效。 */
+    fun setInputAutoLandscapeKeyboard(enabled: Boolean) {
+        viewModelScope.launch { repository.setInputAutoLandscapeKeyboard(enabled) }
+    }
+
+    /** 子项:接鼠标 / 触控板是否触发 */
+    fun setInputAutoLandscapeMouse(enabled: Boolean) {
+        viewModelScope.launch { repository.setInputAutoLandscapeMouse(enabled) }
+    }
+
+    /** 子项:拔掉设备后是否回到切换前的方向 */
+    fun setInputAutoLandscapeRestore(enabled: Boolean) {
+        viewModelScope.launch { repository.setInputAutoLandscapeRestore(enabled) }
+    }
+
     /** 从 onResume 调用：权限页返回后刷新授权状态 */
     fun refreshPermissions() {
         permissionSnapshot.value = MainUiState(

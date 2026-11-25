@@ -52,9 +52,8 @@ That last step is the control experiment — it rules out coincidence and proves
 - **Persistent notification**: portrait / landscape / unlock / reverse buttons — switch without opening the app
 - **Auto-start on boot**: restores the last lock after a reboot
 - **Guard mode**: re-applies the lock if something else changes the orientation
-- **All-Chinese dark UI**: per-orientation gradient colours, a rotatable phone illustration
-
-> Note: the app's UI is Chinese only. This is intentional — it targets Chinese car head units and tablets.
+- **Keyboard / mouse auto-landscape**: switch to landscape when a peripheral is connected, and optionally restore your previous mode when it is unplugged (off by default)
+- **Dark UI**: per-orientation gradient colours, a rotatable phone illustration
 
 ---
 

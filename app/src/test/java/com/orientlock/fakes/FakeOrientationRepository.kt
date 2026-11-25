@@ -55,6 +55,22 @@ class FakeOrientationRepository(
         state.value = state.value.copy(guardEnabled = enabled)
     }
 
+    override suspend fun setInputAutoLandscapeEnabled(enabled: Boolean) {
+        state.value = state.value.copy(inputAutoLandscapeEnabled = enabled)
+    }
+
+    override suspend fun setInputAutoLandscapeKeyboard(enabled: Boolean) {
+        state.value = state.value.copy(inputAutoLandscapeKeyboard = enabled)
+    }
+
+    override suspend fun setInputAutoLandscapeMouse(enabled: Boolean) {
+        state.value = state.value.copy(inputAutoLandscapeMouse = enabled)
+    }
+
+    override suspend fun setInputAutoLandscapeRestore(enabled: Boolean) {
+        state.value = state.value.copy(inputAutoLandscapeRestore = enabled)
+    }
+
     /** 等 settings 流发出满足条件的值，避免测试依赖固定时序 */
     suspend fun awaitSettings(predicate: (AppSettings) -> Boolean): AppSettings =
         settings.first(predicate)

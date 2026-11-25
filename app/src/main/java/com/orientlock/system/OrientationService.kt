@@ -19,9 +19,11 @@ import com.orientlock.data.SettingsOrientationRepository
 import com.orientlock.data.SystemOrientationWriter
 import com.orientlock.data.settingsDataStore
 import com.orientlock.domain.AppSettings
+import com.orientlock.domain.InputCapabilities
 import com.orientlock.domain.NaturalOrientation
 import com.orientlock.domain.OrientationMode
 import com.orientlock.domain.OrientationRepository
+import com.orientlock.domain.stepInputAutoLandscape
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -83,6 +85,31 @@ class OrientationService : Service() {
      */
     private lateinit var overlay: OverlayOrientationController
 
+    /**
+     * 键盘 / 鼠标插拔监听。总开关打开时才注册(见 [syncInputWatcher])。
+     */
+    private lateinit var inputWatcher: InputDeviceWatcher
+
+    /** 监听是否已注册。register/unregister 的幂等护栏 */
+    private var watcherStarted = false
+
+    /**
+     * 最近一次扫描到的外设能力。回调在主线程,设置收集协程也在主线程,
+     * 不需要额外同步。
+     */
+    private var capabilities = InputCapabilities.NONE
+
+    /**
+     * 自动横屏是否正处于「接管中」。
+     *
+     * 只在主线程读写(设备回调经 [handler] 转投主线程,设置收集协程也是主线程),
+     * 因此不需要原子类型。
+     */
+    private var autoLandscapeEngaged = false
+
+    /** 触发自动横屏前用户所处的模式,用于拔掉设备后恢复 */
+    private var modeBeforeAutoLandscape: OrientationMode? = null
+
     /** 上一次渲染通知时的关键状态，避免心跳每 10 秒重复 post 同一条通知 */
     private var lastRenderedNotification: Triple<OrientationMode, Boolean, Boolean>? = null
 
@@ -128,14 +155,69 @@ class OrientationService : Service() {
 
         overlay = OverlayOrientationController(this)
 
+        inputWatcher = InputDeviceWatcher(this) { caps ->
+            // 回调线程由系统决定,统一切回主线程,上面的状态变量就不需要额外同步
+            handler.post {
+                capabilities = caps
+                scope.launch { evaluateInputAutoLandscape(repository.snapshot()) }
+            }
+        }
+
         // 模式一变就更新悬浮窗。这是响应式的：ViewModel 改设置、通知栏按钮改设置、
         // 开机恢复，全都会经由同一条 settings 流到达这里，不需要各处分别调用。
         scope.launch {
             repository.settings.collect { snap ->
                 applyOverlay(snap)
                 refreshNotification()
+                syncInputWatcher(snap)
+                evaluateInputAutoLandscape(snap)
             }
         }
+    }
+
+    /**
+     * 按总开关注册 / 注销输入设备监听。
+     *
+     * start 与 stop 都会把能力清空:start 时是等真正的扫描结果,避免残留旧值先误判;
+     * stop 时是让随后的状态机计算立刻看到「什么都没接」。
+     */
+    private fun syncInputWatcher(snap: AppSettings) {
+        if (snap.inputAutoLandscapeEnabled) {
+            if (!watcherStarted) {
+                watcherStarted = true
+                // 先清空,等真正的扫描结果:否则上一轮残留的值会让本次先误判一次
+                capabilities = InputCapabilities.NONE
+                inputWatcher.start()
+            }
+        } else {
+            stopInputWatcher()
+        }
+    }
+
+    private fun stopInputWatcher() {
+        if (!watcherStarted) return
+        watcherStarted = false
+        inputWatcher.stop()
+        capabilities = InputCapabilities.NONE
+    }
+
+    /**
+     * 跑一步自动横屏状态机。
+     *
+     * 判定与「该不该动作」全在纯函数 [stepInputAutoLandscape] 里,这里只负责
+     * 保存状态,并在需要时调用 [safeSelect]。这样状态机可以在 JVM 上单测,
+     * 而服务层保持无逻辑。
+     */
+    private fun evaluateInputAutoLandscape(snap: AppSettings) {
+        val step = stepInputAutoLandscape(
+            settings = snap,
+            caps = capabilities,
+            engaged = autoLandscapeEngaged,
+            modeBefore = modeBeforeAutoLandscape,
+        )
+        autoLandscapeEngaged = step.engaged
+        modeBeforeAutoLandscape = step.modeBefore
+        step.switchTo?.let { target -> scope.launch { safeSelect(target) } }
     }
 
     /**
@@ -303,6 +385,7 @@ class OrientationService : Service() {
 
     override fun onDestroy() {
         stopGuard()
+        stopInputWatcher()
         // 服务没了，悬浮窗也必须撤掉：窗口持有者是本服务，留着会变成孤儿窗口，
         // 用户会看到一个锁不掉也解不开的方向。
         overlay.stop()

@@ -35,4 +35,16 @@ interface OrientationRepository {
     suspend fun setPersistentNotification(enabled: Boolean)
 
     suspend fun setGuardEnabled(enabled: Boolean)
+
+    /** 总开关:接键盘 / 鼠标自动切横屏 */
+    suspend fun setInputAutoLandscapeEnabled(enabled: Boolean)
+
+    /** 子项:接键盘是否触发(仅总开关打开时有意义) */
+    suspend fun setInputAutoLandscapeKeyboard(enabled: Boolean)
+
+    /** 子项:接鼠标 / 触控板是否触发(仅总开关打开时有意义) */
+    suspend fun setInputAutoLandscapeMouse(enabled: Boolean)
+
+    /** 子项:拔掉设备后是否回到切换前的方向 */
+    suspend fun setInputAutoLandscapeRestore(enabled: Boolean)
 }

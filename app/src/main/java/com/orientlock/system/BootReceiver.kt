@@ -39,7 +39,10 @@ class BootReceiver : BroadcastReceiver() {
                     dataStore = appContext.settingsDataStore,
                     writer = SystemOrientationWriter(AndroidOrientationAccess(appContext)),
                 )
-                if (repository.snapshot().autoStartOnBoot) {
+                val snapshot = repository.snapshot()
+                // 接键盘 / 鼠标自动横屏也跑在服务里:功能开着就必须把服务拉起来,
+                // 否则重启后插外设不会有任何反应,用户会以为功能坏了。
+                if (snapshot.autoStartOnBoot || snapshot.inputAutoLandscapeEnabled) {
                     OrientLockApp.startOrientationServiceSafely(appContext)
                 }
             } finally {

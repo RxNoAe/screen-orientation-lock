@@ -34,6 +34,10 @@ class SettingsOrientationRepository(
         val NOTIFICATION = booleanPreferencesKey("persistent_notification")
         val GUARD = booleanPreferencesKey("guard_enabled")
         val NATURAL = stringPreferencesKey("natural_orientation")
+        val INPUT_AUTO_LANDSCAPE = booleanPreferencesKey("input_auto_landscape_enabled")
+        val INPUT_AUTO_LANDSCAPE_KEYBOARD = booleanPreferencesKey("input_auto_landscape_keyboard")
+        val INPUT_AUTO_LANDSCAPE_MOUSE = booleanPreferencesKey("input_auto_landscape_mouse")
+        val INPUT_AUTO_LANDSCAPE_RESTORE = booleanPreferencesKey("input_auto_landscape_restore")
     }
 
     override val settings: Flow<AppSettings> = dataStore.data.map { it.toAppSettings() }
@@ -87,6 +91,22 @@ class SettingsOrientationRepository(
         dataStore.edit { it[Keys.GUARD] = enabled }
     }
 
+    override suspend fun setInputAutoLandscapeEnabled(enabled: Boolean) {
+        dataStore.edit { it[Keys.INPUT_AUTO_LANDSCAPE] = enabled }
+    }
+
+    override suspend fun setInputAutoLandscapeKeyboard(enabled: Boolean) {
+        dataStore.edit { it[Keys.INPUT_AUTO_LANDSCAPE_KEYBOARD] = enabled }
+    }
+
+    override suspend fun setInputAutoLandscapeMouse(enabled: Boolean) {
+        dataStore.edit { it[Keys.INPUT_AUTO_LANDSCAPE_MOUSE] = enabled }
+    }
+
+    override suspend fun setInputAutoLandscapeRestore(enabled: Boolean) {
+        dataStore.edit { it[Keys.INPUT_AUTO_LANDSCAPE_RESTORE] = enabled }
+    }
+
     /**
      * 取天然朝向：已落盘就直接用，否则探测。
      *
@@ -122,6 +142,10 @@ class SettingsOrientationRepository(
             guardEnabled = this[Keys.GUARD] ?: true,
             naturalOrientation = this[Keys.NATURAL]
                 ?.let { name -> NaturalOrientation.entries.firstOrNull { it.name == name } },
+            inputAutoLandscapeEnabled = this[Keys.INPUT_AUTO_LANDSCAPE] ?: false,
+            inputAutoLandscapeKeyboard = this[Keys.INPUT_AUTO_LANDSCAPE_KEYBOARD] ?: true,
+            inputAutoLandscapeMouse = this[Keys.INPUT_AUTO_LANDSCAPE_MOUSE] ?: true,
+            inputAutoLandscapeRestore = this[Keys.INPUT_AUTO_LANDSCAPE_RESTORE] ?: true,
         )
     }
 }

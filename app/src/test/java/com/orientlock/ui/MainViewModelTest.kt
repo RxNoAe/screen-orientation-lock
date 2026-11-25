@@ -251,6 +251,48 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `打开键盘鼠标自动横屏会持久化并启动服务`() = runTest {
+        // 检测跑在服务里,不启动服务就没人监听插拔
+        val vm = createViewModel()
+        subscribeTo(vm)
+
+        vm.setInputAutoLandscapeEnabled(true)
+
+        assertTrue(repository.snapshot().inputAutoLandscapeEnabled)
+        assertEquals(1, services.startCalls)
+    }
+
+    @Test
+    fun `关闭键盘鼠标自动横屏不启动服务`() = runTest {
+        val vm = createViewModel()
+        subscribeTo(vm)
+
+        vm.setInputAutoLandscapeEnabled(false)
+
+        assertFalse(repository.snapshot().inputAutoLandscapeEnabled)
+        assertEquals(0, services.startCalls)
+    }
+
+    @Test
+    fun `自动横屏子项只落盘不启停服务`() = runTest {
+        val vm = createViewModel()
+        subscribeTo(vm)
+
+        vm.setInputAutoLandscapeKeyboard(false)
+        vm.setInputAutoLandscapeMouse(false)
+        vm.setInputAutoLandscapeRestore(false)
+
+        val snap = repository.snapshot()
+        assertFalse(snap.inputAutoLandscapeKeyboard)
+        assertFalse(snap.inputAutoLandscapeMouse)
+        assertFalse(snap.inputAutoLandscapeRestore)
+        // 子项由运行中的服务经设置流即时生效,不应在这里动服务
+        assertEquals(0, services.startCalls)
+        assertEquals(0, services.stopCalls)
+        assertEquals(0, services.restartGuardCalls)
+    }
+
+    @Test
     fun `刷新权限后授权状态被更新`() = runTest {
         permissions.writeSettings = false
         val vm = createViewModel()
@@ -304,6 +346,10 @@ class MainViewModelTest {
             persistentNotification = true,
             guardEnabled = true,
             naturalOrientation = null,
+            inputAutoLandscapeEnabled = false,
+            inputAutoLandscapeKeyboard = true,
+            inputAutoLandscapeMouse = true,
+            inputAutoLandscapeRestore = true,
         )
         assertEquals(expected, repository.snapshot())
     }

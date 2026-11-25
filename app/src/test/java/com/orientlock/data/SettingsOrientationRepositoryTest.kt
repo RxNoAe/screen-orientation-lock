@@ -157,4 +157,31 @@ class SettingsOrientationRepositoryTest {
 
         assertEquals(0, repo.snapshot().pinnedRotation)
     }
+
+    @Test
+    fun `自动横屏设置的默认值是一组约定值`() = runTest {
+        val (repo, _, _) = fixture()
+
+        val snap = repo.snapshot()
+        assertFalse("总开关默认关闭", snap.inputAutoLandscapeEnabled)
+        assertTrue(snap.inputAutoLandscapeKeyboard)
+        assertTrue(snap.inputAutoLandscapeMouse)
+        assertTrue(snap.inputAutoLandscapeRestore)
+    }
+
+    @Test
+    fun `自动横屏设置的落盘与读回`() = runTest {
+        val (repo, _, _) = fixture()
+
+        repo.setInputAutoLandscapeEnabled(true)
+        repo.setInputAutoLandscapeKeyboard(false)
+        repo.setInputAutoLandscapeMouse(false)
+        repo.setInputAutoLandscapeRestore(false)
+
+        val snap = repo.snapshot()
+        assertTrue(snap.inputAutoLandscapeEnabled)
+        assertFalse(snap.inputAutoLandscapeKeyboard)
+        assertFalse(snap.inputAutoLandscapeMouse)
+        assertFalse(snap.inputAutoLandscapeRestore)
+    }
 }
