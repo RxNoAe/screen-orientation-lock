@@ -1,95 +1,104 @@
-# 屏幕方向锁
+# Screen Orientation Lock
 
-> 免 root 的安卓全局屏幕方向锁定工具。**能锁住那些「自己声明了方向」的应用**——车机桌面、部分音视频应用、游戏。
+> A root-free Android utility that locks the screen orientation **globally** — including for apps that declare their own orientation: car launchers, many video/music players, and some games.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Android-8.0%2B-3ddc84.svg)](https://developer.android.com)
 [![minSdk](https://img.shields.io/badge/minSdk-26-orange.svg)](app/build.gradle.kts)
+[![Release](https://img.shields.io/github/v/release/RxNoAe/screen-orientation-lock)](../../releases/latest)
 
 <p align="center">
-  <img src="docs/images/screen-main.png" width="300" alt="主界面">
-  &nbsp;&nbsp;
-  <img src="docs/images/screen-permission.png" width="300" alt="权限引导">
-</p>
-
-<p align="center">
-  <b>English → <a href="README.en.md">README.en.md</a></b>
+  <b>Chinese docs → <a href="README.zh.md">README.zh.md</a></b>
 </p>
 
 ---
 
-## 它和别的方向锁有什么不同
+## What's new in 1.0.2
 
-市面上多数免 root 方向锁只会写 `Settings.System` 里的方向值，**对「自己声明了方向」的应用完全无效**——因为安卓的优先级是：
+- **False auto-landscape fixed.** The old rule treated any device with a non-zero keyboard type as a keyboard. Phones report `KEYBOARD_TYPE_NON_ALPHABETIC` for volume keys, navigation and headset remotes, so a phone with nothing plugged in flipped to landscape. Auto-landscape now requires a real alphabetic keyboard.
+- **Live input status.** The new **Input devices** section shows what Android actually reports: `Keyboard + Mouse connected`, or `No keyboard or mouse connected`.
+- **Clearer settings.** Cards are grouped under **Behaviour** and **Input devices** headings.
+- **1.7 MB signed release.** The previous CI artifact was an unminified debug build at 11.7 MB. Releases now use R8, resource shrinking and a stable signing key.
+
+---
+
+## What makes this different
+
+Most root-free orientation lockers only write the orientation value into `Settings.System`. That is **completely ineffective against apps that declare their own orientation**, because Android's precedence is:
 
 ```
-应用自己声明的方向  >  全局系统设置
+app-declared orientation  >  global system setting
 ```
 
-车机桌面（如氢桌面，声明 `sensorLandscape`）、部分视频/音乐应用、部分游戏，都属于这一类，它们会把屏幕掰回去，你锁不住。
+Car launchers (e.g. Qing Launcher, which declares `sensorLandscape`), many video and music apps, and some games all fall into that category. They snap the screen back, and you cannot lock them.
 
-**本项目的做法是加一个 0×0 的悬浮窗，在窗口参数上声明方向。** 悬浮窗在窗口层级上高于普通应用窗口，窗口管理器计算屏幕方向时会把它的请求算进去，于是应用自己的声明被压过去。
+**This project instead adds a 0×0 overlay window and declares the orientation in its window parameters.** Overlay windows sit above ordinary application windows in the window hierarchy, so WindowManager takes their orientation request into account when computing the display rotation — and the app's own declaration is overridden.
 
-只需要「显示在其他应用上层」这一个普通权限，**不需要 root，也不需要 Shizuku**。
+It needs only the "Display over other apps" permission. **No root, no Shizuku, no ADB.**
 
-### 实测验证
+### Verified on a real device
 
-在声明了 `sensorLandscape` 的车机桌面前台：
+With a car launcher declaring `sensorLandscape` in the foreground:
 
-| 操作 | 屏幕 |
+| Action | Display |
 |---|---|
-| 锁定竖屏 | `1920x1080` → **`1080x1920`** |
-| 保持 20 秒 | **稳在竖屏，一秒没动** |
-| 杀掉本应用撤下悬浮窗 | 该桌面**立刻抢回横屏** |
+| Lock to portrait | `1920x1080` → **`1080x1920`** |
+| Hold for 20 seconds | **stays portrait, not a single flip** |
+| Kill this app to drop the overlay | the launcher **immediately reclaims landscape** |
 
-最后一步是对照实验——它排除了「碰巧」的可能，证明确实是悬浮窗在压着。
-
----
-
-## 功能
-
-- **6 种方向模式**：竖屏、反向竖屏、横屏、反向横屏、当前方向、自动（跟随传感器）
-- **常驻通知栏**：竖屏 / 横屏 / 解除 / 反向 四个按钮，不打开应用即可切换
-- **开机自启**：重启后自动恢复上次锁定
-- **守护模式**：方向被别的途径改掉时自动改回来
-- **接键盘 / 鼠标自动横屏**:插上外设时自动切横屏,拔掉后可恢复原来的方向(默认关闭)
-- **深色界面**:方向渐变配色、可旋转的手机示意图
+That last step is the control experiment — it rules out coincidence and proves the overlay is what's holding the orientation.
 
 ---
 
-## 安装
+## Features
 
-1. 到 [Releases](../../releases) 下载 `app-release.apk`
-2. 安装后打开，顶部会出现琥珀色权限引导卡
-3. **点「开启悬浮窗」**，在系统设置页打开开关
-4. 返回后即可使用
+- **6 orientation modes**: portrait, reverse portrait, landscape, reverse landscape, current orientation, auto (follow sensor)
+- **Persistent notification**: portrait / landscape / unlock / reverse buttons — switch without opening the app
+- **Auto-start on boot**: restores the last lock after a reboot
+- **Guard mode**: re-applies the lock if something else changes the orientation
+- **Keyboard / mouse auto-landscape** (opt-in): switch to landscape when a peripheral connects, and optionally restore your previous mode when it is unplugged. Only a real alphabetic keyboard triggers it, so built-in key devices are ignored.
+- **Live detection status**: the settings screen shows whether Android currently sees a keyboard, a mouse/touchpad, both, or neither
+- **Dark UI**: per-orientation gradient colours, a rotatable phone illustration
 
-### 两条权限通路
+---
 
-| 权限 | 能力 | 建议 |
+## Install
+
+1. Download `OrientLock-1.0.2.apk` from the [latest release](../../releases/latest)
+2. Open it — an amber permission card appears at the top
+3. Tap **Enable overlay** and turn the switch on in the system settings page
+4. Go back and you're set
+
+Upgrading from 1.0.1? Uninstall it first. The signing key changed, so Android refuses to install over the old build; app settings reset once.
+
+### Two permission paths
+
+| Permission | Capability | Recommendation |
 |---|---|---|
-| **显示在其他应用上层** | 用悬浮窗强制屏幕方向，**能锁住声明了方向的应用** | **推荐**，有它就够了 |
-| 修改系统设置 | 写系统方向设置，只能锁住「跟随系统方向」的应用 | 可选的补充 |
+| **Display over other apps** | Forces the display orientation via an overlay — **works on apps that declare their own orientation** | **Recommended**; this alone is enough |
+| Modify system settings | Writes the system orientation setting — only affects apps that follow the system | Optional supplement |
 
-**有一条能用就能锁。** 只给「修改系统设置」时，车机桌面那类应用锁不住。
-
----
-
-## 已知限制
-
-**锁不住系统自己固定的方向**——例如某些车机的开机画面、部分 ROM 固定的锁屏。那不在应用层能触及的范围，安卓没有给应用任何入口。
-
-另外，悬浮窗需要应用进程存活。本应用用前台服务持有它，并做了开机自启与守护；如果被系统或国产 ROM 的后台管理杀掉，锁定会随之失效。若遇到这种情况，请在系统的「自启动管理」里允许本应用自启，并关闭对它的后台限制——应用内「系统适配」卡片提供跳转按钮。
+**Either one is enough to lock.** With only "Modify system settings", car launchers and similar apps cannot be locked.
 
 ---
 
-## 构建
+## Known limitations
 
-### 环境
+**Orientations fixed by the system itself cannot be locked** — for example some car head units' boot splash, or a lock screen pinned by a particular ROM. That is outside what any app can reach; Android exposes no entry point for it.
 
-- JDK 21（推荐直接用 Android Studio 自带 JBR）
-- Android SDK，`compileSdk 36`
-- Gradle 8.12（wrapper 已随仓库提交）
+Also, the overlay requires the app process to be alive. This app holds it in a foreground service, with boot auto-start and a guard. If the system or an OEM's background manager kills it, the lock goes with it. In that case, allow this app to auto-start in the system's "Auto-start management" and remove background restrictions — the in-app "System adaptation" card deep-links to those pages.
+
+---
+
+## Build
+
+### Requirements
+
+- JDK 21 (Android Studio's bundled JBR works well)
+- Android SDK, `compileSdk 36`
+- Gradle 8.12 (the wrapper is committed)
+
+### Debug APK
 
 ```bash
 git clone <repo>
@@ -97,89 +106,110 @@ cd screen-orientation-lock
 ./gradlew assembleDebug
 ```
 
-产物：`app/build/outputs/apk/debug/app-debug.apk`
+Output: `app/build/outputs/apk/debug/app-debug.apk`
 
-### 一个容易踩的坑
+Debug builds are not minified, so the APK is much larger than a release build.
 
-`gradle.properties` 里写死了
+### One gotcha worth knowing
+
+`gradle.properties` hardcodes
 
 ```properties
 org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
 ```
 
-因为原开发机的默认 JDK 是 Java 26，与 AGP 8.9.3 不兼容，不指定就会报 `Unsupported class file major version`。**在别的机器上请把这一行改成本机 JDK 21 的路径**，或删掉它并设好 `JAVA_HOME`。
+because the original development machine's default JDK was Java 26, which is incompatible with AGP 8.9.3 — without this line the build fails with `Unsupported class file major version`. **On another machine, change this line to your local JDK 21 path**, or delete it and set `JAVA_HOME`.
 
-注意 Gradle 只从 `gradle.properties` 或 `JAVA_HOME` 读这个属性，写在 `local.properties` 里无效。
+Gradle only reads this property from `gradle.properties` or `JAVA_HOME` — putting it in `local.properties` has no effect.
 
-### 跑测试
+### Run the tests
 
 ```bash
 ./gradlew testDebugUnitTest
 ```
 
-88 个单元测试，全部跑在 JVM 上，不需要模拟器，也不需要 Robolectric。
+120 unit tests, all running on the JVM. No emulator, no Robolectric.
 
-### 打正式包
+### Build a signed release
 
-仓库不含签名密钥。要打签名包，在仓库根目录建 `keystore.properties`（已在 `.gitignore` 中）：
+The repository does not contain a signing key. To build a signed release, create `keystore.properties` at the repository root (it is in `.gitignore`):
 
 ```properties
 storeFile=keystore/release.jks
-storePassword=你的口令
-keyAlias=你的别名
-keyPassword=你的口令
+storePassword=your-password
+keyAlias=your-alias
+keyPassword=your-password
 ```
 
-没有这个文件时 release 包会退化为未签名，**构建不会失败**——开源项目应当「clone 即可构建」。
+Then run:
+
+```bash
+./gradlew assembleRelease
+```
+
+Without this file the release build degrades to unsigned — **the build does not fail**. An open-source project should build straight after `git clone`.
+
+For CI, `.github/workflows/build.yml` restores the key from four repository secrets:
+
+| Secret | Contents |
+|---|---|
+| `ANDROID_KEYSTORE_B64` | `base64 -w0 keystore/release.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+Without them the workflow falls back to a debug build instead of failing.
 
 ---
 
-## 代码结构
+## Code structure
 
 ```
 app/src/main/java/com/orientlock/
-├── OrientLockApp.kt        Application：建通知渠道、带兜底的服务启动
-├── MainActivity.kt         单 Activity
-├── domain/                 纯 Kotlin，零安卓依赖，可 JVM 单测
-│   ├── NaturalOrientation.kt    天然朝向 + 纯函数判定（含 DisplayRotation）
-│   ├── OrientationMode.kt       6 种模式 × 中文标签 / 持久化名 / 系统值映射
-│   ├── OrientationGuard.kt      守护偏离判定
-│   ├── AppSettings.kt           设置数据模型
-│   └── OrientationRepository.kt 数据访问接口（依赖倒置，便于测试）
+├── OrientLockApp.kt        Application: notification channel, fallback service start
+├── MainActivity.kt         Single activity
+├── domain/                 Pure Kotlin, zero Android dependencies, JVM-unit-testable
+│   ├── NaturalOrientation.kt    Device natural orientation + pure detection (incl. DisplayRotation)
+│   ├── OrientationMode.kt       6 modes × English label / storage name / system value mapping
+│   ├── OrientationGuard.kt      Guard drift decision
+│   ├── InputAutoLandscape.kt    Keyboard/mouse device rules + trigger decision
+│   ├── AppSettings.kt           Settings data model
+│   └── OrientationRepository.kt Data-access interface (dependency inversion, for testability)
 ├── data/
-│   ├── SystemOrientationAccess.kt  平台读写（唯一接触 Settings.System 之处）
-│   ├── SystemOrientationWriter.kt  方向写入策略（探测互斥、双采样、先校验再写）
-│   ├── SettingsOrientationRepository.kt  DataStore + 守护心跳
-│   └── Preferences.kt               DataStore 委托
+│   ├── SystemOrientationAccess.kt  Platform reads/writes (the only place touching Settings.System)
+│   ├── SystemOrientationWriter.kt  Write policy (probe mutex, double sampling, validate-then-write)
+│   ├── SettingsOrientationRepository.kt  DataStore + guard heartbeat
+│   └── Preferences.kt              DataStore delegate
 ├── system/
-│   ├── OverlayOrientationController.kt  ★ 悬浮窗方向接管（能压过应用声明的关键）
-│   ├── OverlayOrientation.kt            模式 → 悬浮窗方向值映射
-│   ├── OrientationService.kt            前台服务：通知 + 守护 + 持有悬浮窗
-│   ├── BootReceiver.kt                  开机 / 应用更新后拉起
-│   ├── NotificationHelper.kt            通知渠道与通知构建
-│   ├── PermissionChecker.kt             权限查询接口 + 安卓实现
-│   ├── PermissionIntents.kt             系统设置页跳转
-│   └── ServiceGateway.kt                启停服务的接口 + 安卓实现
+│   ├── OverlayOrientationController.kt  ★ Overlay-based orientation control (the key trick)
+│   ├── OverlayOrientation.kt            Mode → overlay orientation value mapping
+│   ├── OrientationService.kt            Foreground service: notification + guard + holds the overlay
+│   ├── InputDeviceWatcher.kt            InputManager scan + hotplug callbacks
+│   ├── BootReceiver.kt                  Start after boot / app update
+│   ├── NotificationHelper.kt            Notification channel and building
+│   ├── PermissionChecker.kt             Permission query interface + Android implementation
+│   ├── PermissionIntents.kt             System settings page intents
+│   └── ServiceGateway.kt                Service start/stop interface + Android implementation
 └── ui/
-    ├── theme/                  配色 / 字形 / 主题 / 模式渐变（唯一来源）
-    ├── MainViewModel.kt        UI 状态与用户意图
-    ├── MainScreen.kt           主界面
-    ├── AppRoot.kt              ViewModel 与主题的接线
-    └── components/             PhonePreview / ModeCard / StatusPill / …
+    ├── theme/                  Colours / typography / theme / mode gradients (single source)
+    ├── MainViewModel.kt        UI state and user intents
+    ├── MainScreen.kt           Main screen
+    ├── AppRoot.kt              ViewModel ↔ theme wiring
+    └── components/             PhonePreview / ModeCard / StatusPill / InputStatusRow / SectionHeader / …
 ```
 
-**分层原则**：`domain` 层不 import 任何 `android.*`，所以单元测试全部跑在 JVM 上；`Settings.System` 的读写被限制在 `SystemOrientationAccess` 一个类里，是全应用风险最集中处，也因此有专门测试。
+**Layering principle**: the `domain` layer imports nothing from `android.*`, so every unit test runs on the JVM. All `Settings.System` access is confined to a single class, `SystemOrientationAccess` — the highest-risk surface in the app, and therefore the one with dedicated tests.
 
 ---
 
-## 兼容性
+## Compatibility
 
-- 最低支持 Android 8.0（API 26）
-- `targetSdk` 定为 35 而非 36：Android 16（API 36）起，系统会**无视平板与折叠屏上应用声明写死的方向**。定 35 可让本软件在大屏设备上继续生效。
+- Minimum Android 8.0 (API 26)
+- `targetSdk` stays at 35. Recent Android releases ignore app-declared orientation on large screens (tablets, foldables) when the app targets the newest SDK. Targeting 35 keeps the lock effective on those devices.
 
-### 打包时必须显式开启全部签名方案
+### Always enable every signature scheme when packaging
 
-`build.gradle.kts` 里这三行**不能删**：
+These three lines in `build.gradle.kts` **must not be removed**:
 
 ```kotlin
 enableV1Signing = true
@@ -187,19 +217,19 @@ enableV2Signing = true
 enableV3Signing = true
 ```
 
-AGP 在 `minSdk >= 24` 时默认**只签 v2**。而部分国产 ROM 的安装器仍会走 v1 校验路径，遇到只有 v2 签名的包会直接报「应用未安装：软件包似乎无效」。
+With `minSdk >= 24`, AGP signs **v2 only** by default. Some OEM installers still validate via the v1 (JAR signing) path, and reject a v2-only package with *"App not installed: package appears to be invalid"*.
 
-本项目 v1.0.0 就栽在这里——在联想小新 Pad Plus 2023 上装不上，补上 v3 签名并在 v1.0.1 里显式打开三个方案后恢复正常。
+v1.0.0 of this project hit exactly that — it would not install on a Lenovo Xiaoxin Pad Plus 2023. v1.0.1 fixes it.
 
 ---
 
-## 开发文档
+## Development notes
 
-- [`docs/从零到发布.md`](docs/从零到发布.md) —— 完整开发记录与踩坑清单，重点是那些**编译通过、单元测试全绿、却在真机上炸**的地方（悬浮窗方向接管、签名方案、CI 配置等）
-- [`docs/真机自测清单.md`](docs/真机自测清单.md) —— 逐条可勾选的验证清单
+- [`docs/development-log.md`](docs/development-log.md) — full development log and pitfall catalogue, focused on the bugs that **compiled fine, passed all unit tests, and still broke on a real device** (overlay-based orientation control, APK signature schemes, CI configuration, and more). Written in Chinese.
+- [`docs/device-test-checklist.md`](docs/device-test-checklist.md) — device test checklist. Written in Chinese.
 
+---
 
-
-## 许可
+## License
 
 [MIT](LICENSE)
